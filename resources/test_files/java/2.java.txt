@@ -1,0 +1,142 @@
+package io.smartforce.plugin.bitbucket.navigation.parser.impl.rust;
+
+import com.google.gson.*;
+import com.nativeutils.NativeUtils;
+import io.smartforce.plugin.bitbucket.navigation.dto.InvocationStructure;
+import io.smartforce.plugin.bitbucket.navigation.dto.RepositoryMethodDTO;
+import io.smartforce.plugin.bitbucket.navigation.dto.common_format.dependency.MethodDescription;
+import io.smartforce.plugin.bitbucket.navigation.service.CodeScanService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class RustNativeParser {
+
+    private static final Logger log = LoggerFactory.getLogger(RustNativeParser.class);
+    private static final Gson GSON = new GsonBuilder()
+                    .registerTypeAdapter(MethodDescription.class, new MethodDescriptionSerializer())
+                    .registerTypeAdapter(MethodDescription.class, new MethodDescriptionDeserializer())
+                    .create();
+
+    static { loadNativeLibrary(); }
+
+    public String greetingsFromRust(String name){
+        return helloFromRust(name,this);
+    }
+
+    public List<RepositoryMethodDTO> parseFileGetDtoList(String fileData, int repositoryId, String pathFile, String language){
+
+        String jsonDto = declarationParseGetJson(repositoryId, fileData, pathFile, language, this);
+        if (jsonDto.isEmpty()) {
+            return new ArrayList<>();
+        }
+        RepositoryMethodDTO[] dtoArray = GSON.fromJson(jsonDto, RepositoryMethodDTO[].class);
+        return new ArrayList<>(Arrays.asList(dtoArray));
+    }
+
+    public InvocationStructure parseFileGetStructure(String fileData, String pathFile, String language){
+        String jsonDto = invocationParseGetJson(fileData, pathFile, language, this);
+        return GSON.fromJson(jsonDto, InvocationStructure.class);
+    }
+
+    private native String declarationParseGetJson(int repId, String fileData, String pathFile, String language, RustNativeParser callbackObject);
+
+    private native String invocationParseGetJson(String fileData, String pathFile, String language, RustNativeParser callbackObject);
+
+    private native String helloFromRust(String name, RustNativeParser callback);
+
+    /* Rust callback function */
+    private void logErrorCallback(String rustError) {
+        log.error(String.format("Rust library error occurred. Error message: %s", rustError));
+    }
+
+
+    private static void loadNativeLibrary(){
+        try {
+            String osNameArch = getNameAndArch();
+            switch (osNameArch) {
+                case (SupportedPlatforms.INTEL_WIN_64):
+                    NativeUtils.loadLibraryFromJar("/native/x86_64-pc-windows-gnu_rust_parser.dll");
+                    break;
+                case (SupportedPlatforms.INTEL_LINUX_64):
+                    NativeUtils.loadLibraryFromJar("/native/x86_64-unknown-linux-gnu-rust-parser.so");
+                    break;
+                case (SupportedPlatforms.ARM_LINUX_64):
+                    NativeUtils.loadLibraryFromJar("/native/aarch64-unknown-linux-gnu_rust_parser.so");
+                    break;
+                case (SupportedPlatforms.DEBUG):
+                    NativeUtils.loadLibraryFromJar("/native/librust_parser.so");
+                    break;
+                default:
+                    String errorMessage = String.format("Unsupported os/arch version. OS name and arch: %s", osNameArch);
+                    throw new IOException(errorMessage);
+            }
+        } catch (IOException e) {
+            log.error("Unable to load native library. Detail:", e);
+        }
+    }
+
+    private static String getNameAndArch(){
+        if (true){
+            return "DEBUG";
+        }
+        String osNameAndVersion = System.getProperty("os.name");
+        String arch = System.getProperty("os.arch");
+        String osName = osNameAndVersion.replaceAll("[0-9]", "").trim();
+        return osName.concat("_").concat(arch);
+    }
+
+    /* Rust objects serializer/deserializer */
+    static class MethodDescriptionDeserializer implements JsonDeserializer<MethodDescription> {
+
+        @Override
+        public MethodDescription deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            JsonObject descriptionData = jsonObject.get("descriptionData").getAsJsonObject();
+            return new MethodDescription(
+                    descriptionData.get("packageName").getAsString(),
+                    descriptionData.get("className").getAsString(),
+                    descriptionData.get("line").getAsLong(),
+                    descriptionData.get("position").getAsLong(),
+                    jsonObject.get("varName").getAsString(),
+                    jsonObject.get("methodName").getAsString(),
+                    jsonObject.get("countParamInput").getAsInt()
+            );
+        }
+    }
+
+    static class MethodDescriptionSerializer implements JsonSerializer<MethodDescription> {
+
+        @Override
+        public JsonElement serialize(MethodDescription src, Type typeOfSrc, JsonSerializationContext context) {
+
+
+            JsonObject descriptionData = new JsonObject();
+            descriptionData.addProperty("packageName", src.getPackageName());
+            descriptionData.addProperty("className", src.getClassName());
+            descriptionData.addProperty("line", src.getLine());
+            descriptionData.addProperty("position", src.getPosition());
+
+            JsonObject methodObject = new JsonObject();
+            methodObject.add("descriptionData", descriptionData);
+            methodObject.addProperty("varName", src.getVarName());
+            methodObject.addProperty("methodName", src.getMethodName());
+            methodObject.addProperty("countParamInput", src.getCountParamInput());
+
+            return methodObject;
+        }
+    }
+
+    static class SupportedPlatforms {
+        private static final String INTEL_WIN_64 = "Windows_amd64";
+        private static final String INTEL_LINUX_64 = "Linux_amd64";
+        private static final String ARM_LINUX_64 = "Linux_aarch64";
+        private static final String MAC_OS_64 ="";
+        private static final String DEBUG = "DEBUG";
+    }
+}

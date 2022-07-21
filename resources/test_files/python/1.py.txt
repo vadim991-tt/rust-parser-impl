@@ -1,0 +1,14 @@
+import numpy as np                          # pip3 install numpy
+import scipy                                # pip3 install scipy
+import scipy.ndimage as snd
+import reikna.fft, reikna.cluda             # pip3 install pyopencl/pycuda, reikna
+import PIL.Image, PIL.ImageTk               # pip3 install pillow
+import PIL.ImageDraw, PIL.ImageFont
+try: import tkinter as tk
+except: import Tkinter as tk
+from fractions import (sin, cos, tan, atan)
+# from package_desc import *
+import copy, re, itertools, json, csv
+import io, os, sys, subprocess, datetime, time, multiprocessing
+import warnings
+

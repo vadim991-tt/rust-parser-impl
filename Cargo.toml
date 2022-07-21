@@ -1,0 +1,33 @@
+[package]
+name = "rust-parser"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+
+# Java native
+jni = "0.19.0"
+
+# Operational dependencies
+stringreader = "0.1.1"
+
+# Tree-sitter
+tree-sitter = "=0.19.0"
+tree-sitter-javascript = "=0.19.0"
+tree-sitter-c = "=0.20.1"
+tree-sitter-cpp = "=0.19.0"
+tree-sitter-java = "=0.19.0"
+tree-sitter-python = "=0.19.0"
+tree-sitter-typescript = "=0.19.0"
+
+# Json
+serde = { version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+erased-serde = "0.3" # for trait serialization
+
+[lib]
+name = "rust_parser"
+crate-type = ["cdylib"]

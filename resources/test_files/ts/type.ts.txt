@@ -1,0 +1,56 @@
+type Animal = {
+  name: string
+}
+
+type Bear = Animal & {
+  honey: Boolean
+}
+
+const bear = getBear();
+bear.name;
+bear.honey;
+
+
+interface Window {
+  title: string
+}
+
+interface Window {
+  ts: import("typescript")
+}
+
+function logger(someString){
+    console.log(someString, someInt);
+}
+
+const src = 'const a = "Hello World"';
+window.ts.transpileModule(src, {});
+
+interface Bird {
+  fly(): void;
+  layEggs(): void;
+}
+
+interface Fish {
+  swim(): void;
+  layEggs(): void;
+}
+
+const greet3 = function greet2(name){
+    console.log("Hello - ", name);
+}
+
+const arrow = (name) => {
+    console.log(name);
+}
+
+const arrow2 = name => console.log('Привет - ', name);
+
+class Point {
+  private x: number;
+  private y: number;
+}
+
+const pt = new Point();
+pt.x = 0;
+pt.y = 0;

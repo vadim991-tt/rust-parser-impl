@@ -1,0 +1,28 @@
+package io.smartforce.plugin.bitbucket.navigation.dto;
+
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import java.util.Objects;
+import java.util.*;
+import p.App;
+import static java.lang.System.*;
+import static java.lang.Math.*;
+
+/* Debug */
+@XmlAccessorType(value = XmlAccessType.FIELD)
+@JsonAutoDetect
+public class DebugDTO {
+
+
+    private final String lastName = getMessage();
+
+    public String doSomething(String ... params) {
+        return "";
+    }
+
+    public void setNestedClassName(String nestedClassName) {
+        this.nestedClassName = nestedClassName;
+    }
+}

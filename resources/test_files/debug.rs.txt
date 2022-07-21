@@ -1,0 +1,75 @@
+// This is a debug module for parser impl
+// Just copy the functions below and change its signature to Invocation/Declaration Data
+
+fn debug_traverse_tree(mut tree_cursor: TreeCursor, parse_data: &mut ClassData) {
+
+    let mut reached_root = false;
+
+    while reached_root == false {
+
+        debug_walk_into(tree_cursor.node(), parse_data);
+
+        if tree_cursor.goto_first_child() { continue; }
+        if tree_cursor.goto_next_sibling() { continue; }
+
+        let mut retracing = true;
+        while retracing {
+            if !tree_cursor.goto_parent() {
+                retracing = false;
+                reached_root = true;
+            }
+            if tree_cursor.goto_next_sibling() {
+                retracing = false;
+            }
+        }
+    }
+}
+
+fn debug_walk_into(node: Node, parse_data: &mut ClassData) {
+    debug_print_node_info(&node, parse_data);
+}
+
+fn debug_get_value(node: &Node, class_data: &mut ClassData) -> String {
+    let source = class_data.source_code();
+    let bytes = source.as_bytes();
+    let mut node_bytes = &bytes[node.start_byte()..node.end_byte()];
+    let mut node_string = String::new();
+
+    node_bytes
+        .read_to_string(&mut node_string)
+        .expect(&format!("RUST UNRECOVERABLE ERROR: Unable to read source code. Path file: {}", class_data.path_file()));
+
+    return node_string;
+}
+
+fn debug_get_node_info(node: &Node, class_data: &mut ClassData) -> String {
+    let source = class_data.source_code();
+    let bytes = source.as_bytes();
+    let mut node_bytes = &bytes[node.start_byte()..node.end_byte()];
+    let mut node_string = String::new();
+
+    node_bytes
+        .read_to_string(&mut node_string)
+        .expect(&format!("RUST UNRECOVERABLE ERROR: Unable to read source code. Path file: {}", class_data.path_file()));
+
+    let mut children = vec![];
+    let mut cursor = node.walk();
+
+    let node_children = node.children(&mut cursor);
+    for child in node_children {
+        let node_child: Node = child;
+        children.push(node_child.kind());
+    }
+
+    let mut parent_type= "";
+    if let Some(parent) = node.parent() {
+        parent_type = parent.kind();
+    }
+
+    let return_str = format!("Node: {} with kind: {} with children: {:?} line: {} parent kind: {}", node_string, node.kind(), children, get_line_number(&node), parent_type);
+    return_str
+}
+
+fn debug_print_node_info(node: &Node, class_data: &mut ClassData) {
+    println!("{}", debug_get_node_info(node, class_data));
+}

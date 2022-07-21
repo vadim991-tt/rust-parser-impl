@@ -1,0 +1,68 @@
+package io.smartforce.plugin.bitbucket.navigation.git;
+
+import com.atlassian.bitbucket.scm.CommandOutputHandler;
+import com.atlassian.utils.process.BaseOutputHandler;
+import com.atlassian.utils.process.ProcessException;
+import io.smartforce.plugin.bitbucket.navigation.dto.repo_structure.BranchFile;
+import io.smartforce.plugin.bitbucket.navigation.dto.repo_structure.BranchFilesList;
+import io.smartforce.plugin.bitbucket.navigation.parser.ParserProvider;
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.*;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class BranchFileOutputHandler extends BaseOutputHandler<BranchFilesList<String>> implements CommandOutputHandler<BranchFilesList>, Serializable{
+    private static final Logger log = LoggerFactory.getLogger(BranchFileOutputHandler.class);
+    private final static Integer OFFSET = 1;
+    private final static String SPLITTER_PARAMETERS_SYMBOL = "\\s+";
+    private final static String START_FILE_PATH_SYMBOL = "\t";
+    private final static String SPLITTER_LINES_SYMBOL = "\\u0000";
+    private final static String BLOB = "blob";
+    private final BranchFilesList branchFilesList = new BranchFilesList(false);
+    private final ParserProvider parserProvider;
+
+    public BranchFileOutputHandler(ParserProvider parserProvider) {
+        super();
+        this.parserProvider = parserProvider;
+    }
+
+    public Result calc (BranchFileOutputHandler this) {
+        return doSomething();
+    }
+
+    public Result calc (String ... args, Integer id) {
+        return doSomething();
+    }
+
+    @Override
+    public void process(InputStream inputStream) throws ProcessException {
+        String line;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            while ((line = reader.readLine()) != null) {
+
+                Arrays.stream(line.split(SPLITTER_LINES_SYMBOL)).filter(x -> x.contains(BLOB)).forEach(x -> {
+                    Integer startfilePath = x.indexOf(START_FILE_PATH_SYMBOL);
+                    String[] fileParameters = x.substring(0, startfilePath).split(SPLITTER_PARAMETERS_SYMBOL);
+                    String filePath = x.substring(startfilePath + OFFSET);
+                    String typeObject = fileParameters[1];
+                    String object = fileParameters[2];
+
+                    if (parserProvider.supportsFormat(FilenameUtils.getExtension(filePath))) {
+                        branchFilesList.addBranchFile(new BranchFile(typeObject, object, filePath, "A"));
+                    }
+                });
+            }
+        } catch (IOException ex) {
+            log.error("error reading batch files", ex);
+        }
+    }
+
+
+    @Override
+    public BranchFilesList getOutput() {
+        return branchFilesList;
+    }
+}

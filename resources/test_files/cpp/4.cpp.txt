@@ -1,0 +1,32 @@
+#include <algorithm> // For std::fill
+#include <iterator>  // For non-member std::begin and std::end 
+#include <iostream>
+
+
+struct String {
+
+	String(size_t n, char c){
+        size = n;
+        str = new char[n+1];
+        for(int i=0; i < n; ++i)
+            str[i] = c;
+        str[n+1] = '\0';
+        std::cout << str;
+    }
+
+    /* и деструктор */
+	~String(){
+        delete[] str;
+        size_t size = 0;
+    }
+
+
+	size_t size;
+	char *str;
+};
+
+int main(){
+
+    String myString(5, 'o');
+    std::cout << myString.str;
+}

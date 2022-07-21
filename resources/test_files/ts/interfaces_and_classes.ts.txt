@@ -1,0 +1,47 @@
+interface IStark {
+    name: string;
+    age? : number; // is not required
+}
+
+function printName(stark: IStark) {
+    console.log(stark.name);
+}
+
+
+printName({ name: "Eddard" });
+
+class Greeter2 {
+    
+    greeting : string;
+    
+    constructor(message: string) {
+        this.greeting = message;
+    }
+
+
+}
+
+class Stark {
+
+    name : string = "Brandon";
+    static castle: string = "Winterfell"
+    saying: string;
+
+    constructor(){
+        this.saying = Stark.castle
+    }
+
+    hello(person : String) {
+        console.log("Hello, " + person);
+    }
+    
+}
+
+function function_name():return_type {
+   //statements
+   return value;
+}I
+
+var ned = new Stark();
+ned.saying = "Winter is coming";
+ned.hello("Robert");

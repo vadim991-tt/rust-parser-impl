@@ -1,0 +1,5 @@
+.idea
+target/
+*.iml
+Cargo.lock
+resources/test_files/js/1000

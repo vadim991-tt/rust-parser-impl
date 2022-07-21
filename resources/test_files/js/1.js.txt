@@ -1,0 +1,117 @@
+class Rectangle extends Object {
+
+    constructor(height, width) {
+        super();
+        this.height = height;
+        this.width = width;
+    }
+
+    set(height = 4, width = "yes") {
+        this.height = height;
+        this.width = width;
+    }
+
+    get area() {
+        return this.calcArea();
+    }
+
+    calcArea() {
+        return this.height * this.width;
+    }
+
+    sumALL(...all){
+        let result = 0;
+        for (let num of all){
+            result += num;
+        }
+        return result;
+        // console.log(all); // will print array
+    }
+
+}
+
+
+// Function expression
+const greet2 = function greet2(name){
+    console.log("Hello - ", name);
+}
+
+const greet3 = function(name){
+    console.log("Hello - ", name);
+}
+
+console.log(greet2("Vadim"));  // OK!
+console.log(typeof greet2); // function
+console.dir(greet2); // object
+// JS - прототипированный язык. Все завязано на прототипах. Все функции являются объектами
+
+// 2 Anonymous function - вызываются внутри и не имеют названия
+let counter = 0;
+const interval = setInterval(function(){
+    if (counter === 5) {
+        clearInterval(interval);
+    } else{
+        console.log(++counter);
+    }
+}, 1000);
+//  Функция function() будет вызвана без (не декларирована, а вызвана! Потому что setInterval её вызовет)
+
+// 3 Стрелочные функции
+const greet3 = function greet2(name){
+    console.log("Hello - ", name);
+}
+
+const arrow = (name) => {
+    console.log(name);
+}
+
+const arrow2 = name => console.log('Привет - ', name);
+
+arrow('Vadim');
+greet3('Vadim');
+
+const pow2 = num => num ** 2;
+console.log(pow2(5));
+
+// 4 Параметры по умолчанию
+const sum = (a, b) => a + b;
+
+console.log(sum(41, 1)); // 42
+console.log(sum(41)); // Nan
+
+// Дабы избежать Nan можем установить параметры по умолчанию
+const sum1 = (a, b = 1) => a + b;
+console.log(sum1(41)); // 42
+
+console.log(sum1(41, 5)); // 46
+
+const sum1 = (a = 40, b = a * 2) => a + b; // так тоже можно (120)
+
+
+function sumALL(...all){
+    let result = 0;
+    for (let num of all){
+        result += num;
+    }
+    return result;
+    // console.log(all); // will print array
+}
+
+console.log(sumALL(1, 2, 3, 4));
+
+// 5 Замыкание
+function createMember(name){
+    return function(lastName){
+        console.log(name + lastName);
+    }
+} // из одной функции вызываем другую
+
+
+const logWithLastName = createMember('Vadim');
+
+
+
+
+
+
+

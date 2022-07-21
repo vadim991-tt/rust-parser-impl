@@ -1,0 +1,219 @@
+"use strict";
+require(['aui/inline-dialog2']);
+
+define('plugin/navigation', [
+    'jquery',
+    'underscore',
+    'bitbucket/util/state',
+    'bitbucket/util/events'
+], function(
+    $,
+    _,
+    state,
+    events
+) {
+    var registeredLines = {};
+    var multiLinkTargets = {};
+
+    function fillLinksForLine(lineElement, targetUrls, methodName, lineCode, multiLinkId) {
+        if(!lineElement) return;
+
+        if(typeof lineElement.className !== "undefined") {
+            if((lineElement.className.includes("cm-property")
+                || lineElement.className.includes("cm-variable")
+                || lineElement.className.includes("cm-keyword")
+                || lineElement.className.includes("cm-def")
+                ) && lineElement.innerText === methodName
+                /* For c++ functions  with :: */
+                || (lineElement.innerText.includes("::") && lineElement.innerText.includes(methodName))) {
+
+                var innerText = lineElement.innerText;
+                var inlineDialogId = "multilink-navigation-" + multiLinkId;
+                lineElement.innerHTML = smartforce.code.navigation.MultiNavigationLink({
+                    inlineDialogId : inlineDialogId,
+                    text : innerText
+                });
+
+            }
+        }
+    }
+
+    function renderNavigation($codeLine, entry) {
+        $codeLine.find("span span").each(function(idx, element) {
+            fillLinksForLine(element, entry.target, entry.link.methodName, entry.link.line, entry.link.multiLinkId);
+        });
+
+    }
+
+    function createOrGetLinkArray(registeredLines, lineNumber){
+        if (registeredLines[lineNumber] === undefined){
+            registeredLines[lineNumber] = [];
+        }
+        return registeredLines[lineNumber];
+    }
+
+    function onLineRender(instance, line, element) {
+        var $codeLine = AJS.$(element);
+        var $gutter = AJS.$(line.gutterMarkers['line-number']);
+
+        var lineNumber = parseInt($gutter.data('line-number'));
+
+        if (registeredLines[lineNumber]) {
+            registeredLines[lineNumber].forEach(element => renderNavigation($codeLine, element));
+        }
+
+    }
+    function doCodeMirrorScroll(cm, pathParamsAndHash) {
+        var parts = pathParamsAndHash.split('#');
+        var url = parts[0].split('?')[0];
+        var line = parts[1];
+        if (url === window.location.pathname) {
+            var t = cm.charCoords({line: parseInt(line), ch: 0}, "page").top;
+            window.scrollTo(0, t - 100);
+            window.location.href = pathParamsAndHash;
+        }
+    }
+
+    function configureCodeMirror() {
+        var el = AJS.$('.CodeMirror.cm-s-stash-default').get(0);
+
+        el.CodeMirror.on('renderLine', onLineRender);
+
+        el.CodeMirror.on('mousedown', function(cm, e) {
+            deleteInlineDialogs(); // to prevent position losing/focusing on element
+            var $target = AJS.$(e.target);
+            if ($target.is(".code-multi-navigation-link")) {
+                var inlineDialogId = $target.attr("aria-controls");
+                var id = parseInt(inlineDialogId.split("-")[2]);
+                var entry = multiLinkTargets[id];
+                var $inline = AJS.$("#" + inlineDialogId);
+                if (!$inline.length) {
+                    $inline = AJS.$(smartforce.code.navigation.MultiNavigationLinkInlineDialog({
+                        id : inlineDialogId,
+                        targets : entry.target.slice(0, 10), //do not display too many matches
+                        totalCnt: entry.target.length
+                    })).appendTo("body");
+
+                    $inline.find("pre").each(function(idx, item) {
+                        CodeMirror.runMode(item.innerText, item.getAttribute("data-mime-type") , item);
+                    });
+                    setTimeout(function() { //delay is required to let aui listener run
+                        $inline.get(0).blur(); // to prevent focusing on element
+                        $inline.get(0).open = true;
+                    }, 100);
+                }
+            }
+        });
+        return el.CodeMirror;
+    }
+
+    function configureGlobalListeners (cm) {
+        AJS.$("body").on("click", function(e) {
+            var $target = AJS.$(e.target);
+            if ($target.is("aui-inline-dialog .target-link")) {
+                var $inline = $target.parents("aui-inline-dialog");
+                $inline.get(0).open = false;
+                doCodeMirrorScroll(cm, $target.attr('href'));
+            }
+        });
+
+        $(window).on("resize scroll",function(e){
+            deleteInlineDialogs(); // to prevent position losing
+        });
+    }
+
+    function deleteInlineDialogs(){
+        $(".code-navigation-inline-dialog").remove();
+    }
+
+    function init() {
+        var me = this;
+
+        function onContentChanged() {
+            var cm = configureCodeMirror();
+            configureGlobalListeners(cm);
+            me.applyHighlighting();
+        }
+
+        events.on('bitbucket.internal.feature.fileContent.sourceViewContentChanged', onContentChanged);
+        events.on('bitbucket.internal.DO_NOT_USE.feature.fileContent.sourceViewContentChanged', onContentChanged);
+    }
+
+    _.extend(init.prototype, {
+        applyHighlighting: function() {
+            var me = this,
+                projectKey = state.getProject().key,
+                repositorySlug = state.getRepository().slug,
+                pathObj = state.getFilePath(),
+                path = pathObj.components.join('/'),
+                branch = state.getRef().id,
+                url = [
+                    AJS.contextPath(),
+                    "/rest/code-navigation/latest/projects/",
+                    projectKey,
+                    "/repos/",
+                    repositorySlug,
+                    "/",
+                    path
+                ].join('');
+
+            $.ajax({
+                url: url,
+                data: {branch: branch}
+
+            }).done(function(response) {
+                var multiLinkId = 1;
+                _.each(response, function(entry) {
+                    me.buildTargetUrl(projectKey, repositorySlug, entry.target, branch);
+                    entry.link.multiLinkId = multiLinkId;
+                    multiLinkTargets[multiLinkId] = entry;
+                    multiLinkId++;
+                    createOrGetLinkArray(registeredLines, entry.link.line).push(entry);
+
+                    var $gutterLine = $("a[href='#" + entry.link.line + "']");
+
+                    if ($gutterLine.length) { //rendered lines only
+                        var $lineContainer = $gutterLine.parents(".line");
+                        var $codeLine = $lineContainer.find(".CodeMirror-line");
+
+                        renderNavigation($codeLine, entry);
+                    }
+                });
+
+            }).fail(function(xhr) {
+                if (xhr.status === 409) {
+                    AJS.flag({
+                        type: 'error',
+                        body: 'Code navigation plugin has no license',
+                    });
+                }
+            });
+        },
+        buildTargetUrl: function(projectKey, repositorySlug, entries, branch) {
+            entries.forEach(function(entry) {
+                entry.url = [
+                    AJS.contextPath(),
+                    "/projects/",
+                    projectKey,
+                    "/repos/",
+                    repositorySlug,
+                    "/browse/",
+                    entry.path,
+                    branch ? "?at=" + encodeURIComponent(branch) : "",
+                    "#",
+                    entry.line
+
+                ].join('');
+
+            });
+        },
+    });
+
+    return init;
+});
+
+AJS.$(function() {
+    var App = require('plugin/navigation');
+    new App();
+
+});

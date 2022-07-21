@@ -1,0 +1,44 @@
+#include <iostream> 
+
+void simpleArrayIteration();
+
+void pointerArrayIteration();
+
+int max_elem (int * m, int size);
+
+int main(){
+
+    return 0;
+
+}
+
+// Итерация
+void simpleArrayItertaion(){
+    int m[10] = {1, 2, 3, 4, 5};
+    for(int i = 0; i < 10; i++){
+        std::cout << m[i] << ' ';
+    }
+}
+
+// Заполнение массива от 1 до 10
+void pointerArrayIteration(){
+    int m[10] = {};
+    for (int * p = m; p <= m + 9; p++){ // int * p = m == int * p = &m[0] - указатель на первый элемент; p <= m + 9 == p <= &m[9];
+        *p = (p - m) + 1; // m[p] = p - 0 + 1
+    }
+}
+
+// Передача массива в функцию
+int max_elem (int * m, int size) { // где int * m - указатель на массив, size - величина массива
+
+    int max = *m; // &m[0]
+    for(int i = 1; i < size; ++i){
+        if(m[i] > max){
+            max = m[i];
+        }
+    }
+
+    return 0;
+
+}
+

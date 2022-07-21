@@ -1,0 +1,67 @@
+package io.smartforce.plugin.bitbucket.navigation.dto.universal_format;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
+/**
+ * @author andrey
+ */
+@XmlAccessorType(value = XmlAccessType.FIELD)
+public class NavigationLink {
+    private String varName;
+    private String methodName;
+    private Integer countParamInput;
+    private Long line;
+    private Long position;
+
+    public NavigationLink(String varName, String methodName, Integer countParamInput, Long line, Long position) {
+        this.varName = varName;
+        this.methodName = methodName;
+        this.countParamInput = countParamInput;
+        this.line = line;
+        this.position = position;
+    }
+
+    public Long getLine() {
+        return line;
+    }
+
+    public void setLine(Long line) {
+        this.line = line;
+    }
+
+    public Long getPosition() {
+        return position;
+    }
+
+    public void setPosition(Long position) {
+        this.position = position;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
+    }
+
+    public String getVarName() {
+        return varName;
+    }
+
+    public void setVarName(String varName) {
+        this.varName = varName;
+    }
+
+    public Integer getCountParamInput() {
+        return countParamInput;
+    }
+
+    public void setCountParamInput(Integer countParamInput) {
+        this.countParamInput = countParamInput;
+    }
+
+    public NavigationLink() {
+    }
+}

@@ -1,0 +1,60 @@
+
+
+
+class Color(Enum):
+    """Outer Class"""
+
+    def __init__(self):
+        ## Instantiating the 'Inner' class
+        self.inner = self.Inner()
+        ## Instantiating the '_Inner' class
+        self._inner = self._Inner()
+
+    def show_classes(self):
+        print("This is Outer class")
+        print(inner)
+        print(_inner)
+
+    class Inner:
+        """First Inner Class"""
+
+        def inner_display(self, msg):
+            print("This is Inner class")
+            print(msg)
+
+    class _Inner:
+        """Second Inner Class"""
+
+        def inner_display(self, msg):
+            print("This is _Inner class")
+            print(msg)
+
+
+def print_hi(name):
+    # Use a breakpoint in the code line below to debug your script.
+    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+
+
+if __name__ == '__main__':
+
+    outer = Outer()
+    # 'Inner' class
+    inner = outer.Inner()
+    # inner = outer.inner or inner = Outer().Inner()
+    # '_Inner' class
+    _inner = outer._Inner()  # _inner = outer._outer or _inner = Outer()._Inner()
+
+    # calling the methods
+    outer.show_classes()
+
+    print()
+
+    # 'Inner' class
+    inner.inner_display("Just Print It!")
+
+    print()
+
+    # '_Inner' class
+    _inner.inner_display("Just Show It!")
+
+    print_hi('PyCharm')
